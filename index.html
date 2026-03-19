@@ -8,12 +8,11 @@
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet"/>
     <style>
         body { background-color: #f3f4f6; font-family: -apple-system, sans-serif; }
-        .slide-container { max-width: 1200px; margin: 10px auto; background: white; border-radius: 12px; shadow: 0 10px 25px rgba(0,0,0,0.1); overflow: hidden; }
+        .slide-container { max-width: 1200px; margin: 10px auto; background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); overflow: hidden; }
         .bg-ncut-blue { background-color: #1a3a52; }
         input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #e67e22; cursor: pointer; margin-top: -7px; border: 2px solid white; shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #e67e22; cursor: pointer; margin-top: -7px; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; background: #cbd5e1; border-radius: 3px; }
-        canvas { background: #fff; border: 1px solid #ddd; border-radius: 8px; }
     </style>
 </head>
 <body>
@@ -22,10 +21,11 @@
     <div class="h-20 bg-ncut-blue flex items-center px-8 justify-between text-white border-b-4 border-yellow-500">
         <div>
             <p class="text-blue-300 text-[10px] font-bold uppercase tracking-widest">NCUT Intelligent Automation - CV Lab</p>
-            <h2 class="text-xl font-bold">CIE Lab Banana Classifier</h2>
+            <h2 class="text-xl font-bold">CIE Lab Banana Classifier (Binary: Unripe/Ripe)</h2>
         </div>
         <div class="text-right hidden md:block text-xs opacity-60">
             <p>National Chin-Yi University of Technology</p>
+            <p>Prof. Chen Zhirong (QB)</p>
         </div>
     </div>
 
@@ -36,6 +36,7 @@
                 <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div class="w-12 h-12 border-2 border-dashed border-yellow-400 opacity-60"></div>
                 </div>
+                <div class="absolute top-2 left-2 bg-black bg-opacity-50 text-[10px] text-white px-2 py-1 rounded italic">Sampling: Center Pixel</div>
             </div>
             
             <button id="startCamera" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold shadow-md hover:bg-blue-700 active:scale-95 transition">
@@ -57,48 +58,44 @@
                 </div>
             </div>
 
-            <div id="status" class="text-3xl font-black text-center py-4 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 uppercase">Waiting...</div>
+            <div id="status" class="text-3xl font-black text-center py-4 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 uppercase transition-all duration-300">
+                WAITING...
+            </div>
         </div>
 
         <div class="space-y-6">
-            <div class="relative h-64">
-                <p class="text-xs font-bold text-gray-500 mb-2 uppercase tracking-tighter">Color Visualization (a* vs b*)</p>
+            <div class="relative h-64 bg-white border border-gray-200 rounded-lg overflow-hidden">
+                <p class="absolute top-2 left-4 text-xs font-bold text-gray-500 uppercase tracking-tighter z-10">Chromaticity Plane (a* vs b*)</p>
                 <canvas id="labGraph" class="w-full h-full"></canvas>
+                <div class="absolute bottom-1 right-2 text-[8px] text-gray-300 italic">Reference: Szeliski CV p.97</div>
             </div>
 
-            <div class="bg-gray-50 p-5 rounded-xl border space-y-4">
-                <h3 class="text-sm font-bold text-gray-600 uppercase border-b pb-2">Adjustable Thresholds</h3>
+            <div class="bg-gray-50 p-5 rounded-xl border space-y-5">
+                <h3 class="text-sm font-bold text-gray-600 uppercase border-b pb-2 tracking-widest"><i class="fas fa-cog mr-2"></i>Threshold Parameters</h3>
                 
                 <div>
-                    <div class="flex justify-between text-[10px] font-bold">
-                        <label class="text-green-600 uppercase">Unripe Boundary (a*)</label>
-                        <span id="labelT1">-10</span>
+                    <div class="flex justify-between text-[11px] font-bold">
+                        <label class="text-green-600 uppercase">Unripe Boundary (-a*)</label>
+                        <span id="labelT1" class="font-mono">-10</span>
                     </div>
-                    <input id="thresh1" max="-2" min="-30" type="range" value="-10" class="mt-1">
+                    <input id="thresh1" max="-2" min="-50" type="range" value="-10" class="mt-1">
                 </div>
 
                 <div>
-                    <div class="flex justify-between text-[10px] font-bold">
-                        <label class="text-yellow-600 uppercase">Ripe Boundary (b*)</label>
-                        <span id="labelT2">35</span>
+                    <div class="flex justify-between text-[11px] font-bold">
+                        <label class="text-yellow-600 uppercase">Ripe Boundary (+b*)</label>
+                        <span id="labelT2" class="font-mono">35</span>
                     </div>
                     <input id="thresh2" max="80" min="10" type="range" value="35" class="mt-1">
                 </div>
 
-                <div>
-                    <div class="flex justify-between text-[10px] font-bold">
-                        <label class="text-red-800 uppercase">Very Ripe Boundary (a*)</label>
-                        <span id="labelT3">10</span>
-                    </div>
-                    <input id="thresh3" max="30" min="2" type="range" value="10" class="mt-1">
-                </div>
-
-                <div class="pt-2 border-t mt-2">
-                    <div class="flex justify-between text-[10px] font-bold text-gray-400">
-                        <label class="uppercase tracking-widest italic">Gamma (γ) Impact</label>
-                        <span id="labelGamma">2.2</span>
+                <div class="pt-4 border-t mt-2">
+                    <div class="flex justify-between text-[11px] font-bold text-gray-400">
+                        <label class="uppercase tracking-widest italic">Gamma Correction (γ)</label>
+                        <span id="labelGamma" class="font-mono">2.2</span>
                     </div>
                     <input id="gammaSlider" max="3.0" min="0.5" step="0.1" type="range" value="2.2" class="mt-1 opacity-50">
+                    <p class="text-[9px] text-gray-400 mt-1 italic">※ Gamma affects L* but theoretically keeps a* and b* stable.</p>
                 </div>
             </div>
         </div>
@@ -106,32 +103,30 @@
 </div>
 
 <script>
-    // --- Core Processing ---
     const video = document.getElementById('video');
     const graph = document.getElementById('labGraph');
     const ctx = graph.getContext('2d');
     const statusDiv = document.getElementById('status');
     const startBtn = document.getElementById('startCamera');
     
-    // UI Elements
+    // Sliders & Labels
     const t1 = document.getElementById('thresh1');
     const t2 = document.getElementById('thresh2');
-    const t3 = document.getElementById('thresh3');
     const gammaS = document.getElementById('gammaSlider');
 
     let currentLab = {L:0, a:0, b:0};
 
     t1.oninput = () => document.getElementById('labelT1').innerText = t1.value;
     t2.oninput = () => document.getElementById('labelT2').innerText = t2.value;
-    t3.oninput = () => document.getElementById('labelT3').innerText = t3.value;
     gammaS.oninput = () => document.getElementById('labelGamma').innerText = parseFloat(gammaS.value).toFixed(1);
 
+    // CIE Lab Conversion Logic
     function rgbToLab(r, g, b) {
-        // Linearize based on Gamma
-        const gVal = parseFloat(gammaS.value);
-        let lin = (c) => Math.pow(c/255, gVal); // Simple Gamma impact simulation
+        // Simple Gamma linearization simulation
+        let lin = (c) => Math.pow(c/255, parseFloat(gammaS.value));
         let rL = lin(r), gL = lin(g), bL = lin(b);
         
+        // RGB -> XYZ (Simplified D65)
         let X = rL * 0.4124 + gL * 0.3576 + bL * 0.1805;
         let Y = rL * 0.2126 + gL * 0.7152 + bL * 0.0722;
         let Z = rL * 0.0193 + gL * 0.1192 + bL * 0.9505;
@@ -141,58 +136,81 @@
         return { L: 116*f(yN)-16, a: 500*(f(xN)-f(yN)), b: 200*(f(yN)-f(zN)) };
     }
 
+    // Graph Drawing Logic (a* vs b*)
     function drawGraph() {
         const w = graph.width = graph.offsetWidth;
         const h = graph.height = graph.offsetHeight;
         ctx.clearRect(0, 0, w, h);
         
-        // Grid Axis
-        ctx.strokeStyle = "#f0f0f0"; ctx.beginPath();
-        ctx.moveTo(w/2, 0); ctx.lineTo(w/2, h); ctx.moveTo(0, h/2); ctx.lineTo(w, h/2); ctx.stroke();
+        // Axis Lines (Center is 0,0)
+        ctx.strokeStyle = "#f3f4f6"; ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(w/2, 0); ctx.lineTo(w/2, h); // b* axis
+        ctx.moveTo(0, h/2); ctx.lineTo(w, h/2); // a* axis
+        ctx.stroke();
         
-        const m = (val) => (val + 100) * (w/200); // Map -100 to 100
+        // Mapping -100 to 100 range to canvas
+        const m = (val) => (val + 100) * (w/200);
         
-        // Decision Background Zones
+        // Decision Zones (Based on Sliders)
         ctx.globalAlpha = 0.1;
-        ctx.fillStyle = "green"; ctx.fillRect(0, 0, m(parseInt(t1.value)), h);
-        ctx.fillStyle = "yellow"; ctx.fillRect(m(parseInt(t1.value)), 0, w - m(parseInt(t1.value)), m(-parseInt(t2.value) + 50)); 
-        ctx.fillStyle = "brown"; ctx.fillRect(m(parseInt(t3.value)), m(50), w - m(parseInt(t3.value)), h/2);
+        // Unripe Zone (Negative a* area)
+        ctx.fillStyle = "green"; 
+        ctx.fillRect(0, 0, m(parseInt(t1.value)), h);
+        // Ripe Zone (Positive b* area above threshold)
+        ctx.fillStyle = "#d4af37"; // Gold/Yellow
+        ctx.fillRect(m(parseInt(t1.value)), 0, w - m(parseInt(t1.value)), h/2 - (parseInt(t2.value) * (h/200)));
         ctx.globalAlpha = 1.0;
 
-        // banana Dot
+        // Banana Color Coordinate (Red Dot)
         ctx.fillStyle = "red"; ctx.beginPath();
-        ctx.arc(m(currentLab.a), h - m(currentLab.b), 8, 0, 7);
-        ctx.fill(); ctx.strokeStyle = "white"; ctx.lineWidth = 2; ctx.stroke();
+        // Canvas coordinate: Y increases downwards, so we flip b*
+        ctx.arc(m(currentLab.a), h/2 - (currentLab.b * (h/200)), 8, 0, Math.PI * 2);
+        ctx.fill(); 
+        ctx.strokeStyle = "white"; ctx.lineWidth = 2; ctx.stroke();
         
         // Labels
-        ctx.fillStyle = "#999"; ctx.font = "8px Arial";
-        ctx.fillText("+b (Yellow)", w/2 + 5, 15);
+        ctx.fillStyle = "#cbd5e1"; ctx.font = "bold 9px Arial";
+        ctx.fillText("+b (Yellow)", w/2 + 5, 12);
         ctx.fillText("-a (Green)", 5, h/2 - 5);
     }
 
     startBtn.onclick = () => {
-        navigator.mediaDevices.getUserMedia({video: {facingMode:'environment'}}).then(s => {
-            video.srcObject = s; startBtn.style.display = 'none';
-        });
+        navigator.mediaDevices.getUserMedia({video: {facingMode:'environment'}})
+        .then(s => { video.srcObject = s; startBtn.style.display = 'none'; })
+        .catch(err => alert("Camera error: " + err));
     }
 
+    // Main Loop (5 samples/sec)
     setInterval(() => {
         if (!video.videoWidth) return;
+        
         const tempCanvas = document.createElement('canvas');
         const tCtx = tempCanvas.getContext('2d');
         tempCanvas.width = 10; tempCanvas.height = 10;
         tCtx.drawImage(video, video.videoWidth/2-5, video.videoHeight/2-5, 10, 10, 0, 0, 10, 10);
         const p = tCtx.getImageData(5, 5, 1, 1).data;
+        
         currentLab = rgbToLab(p[0], p[1], p[2]);
         
+        // Update Metrics
         document.getElementById('valL').innerText = currentLab.L.toFixed(1);
         document.getElementById('valA').innerText = currentLab.a.toFixed(1);
         document.getElementById('valB').innerText = currentLab.b.toFixed(1);
 
-        if (currentLab.a < t1.value) { statusDiv.innerText = "Unripe"; statusDiv.style.color = "green"; }
-        else if (currentLab.b > t2.value) { statusDiv.innerText = "Ripe"; statusDiv.style.color = "#d4af37"; }
-        else if (currentLab.a > t3.value) { statusDiv.innerText = "Very Ripe"; statusDiv.style.color = "brown"; }
-        else { statusDiv.innerText = "Unknown"; statusDiv.style.color = "#999"; }
+        // Binary Classification Logic
+        if (currentLab.a < t1.value) { 
+            statusDiv.innerText = "UNRIPE"; 
+            statusDiv.className = "text-3xl font-black text-center py-4 bg-green-100 text-green-700 rounded-lg border-2 border-green-500 shadow-sm"; 
+        }
+        else if (currentLab.b > t2.value) { 
+            statusDiv.innerText = "RIPE"; 
+            statusDiv.className = "text-3xl font-black text-center py-4 bg-yellow-50 text-yellow-600 rounded-lg border-2 border-yellow-400 shadow-sm"; 
+        }
+        else { 
+            statusDiv.innerText = "NEUTRAL"; 
+            statusDiv.className = "text-3xl font-black text-center py-4 bg-gray-100 text-gray-400 rounded-lg border-2 border-dashed border-gray-300"; 
+        }
         
         drawGraph();
     }, 200);
