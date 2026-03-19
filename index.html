@@ -3,335 +3,199 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Szeliski CV Lab: Perceptual Banana Ripeness</title>
+    <title>NCUT CV Lab: Banana Ripeness Explorer</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet"/>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet"/>
     <style>
-        body { margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, system-ui, sans-serif; }
-        .slide-container { max-width: 1400px; margin: 20px auto; background-color: white; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-radius: 12px; overflow: hidden; }
-        .bg-academic-blue { background-color: #1a3a52; }
-        .text-academic-orange { color: #e67e22; }
-        .font-mono { font-family: 'Roboto Mono', monospace; }
-        
-        /* Custom styled Range Slider */
+        body { background-color: #f3f4f6; font-family: -apple-system, sans-serif; }
+        .slide-container { max-width: 1200px; margin: 10px auto; background: white; border-radius: 12px; shadow: 0 10px 25px rgba(0,0,0,0.1); overflow: hidden; }
+        .bg-ncut-blue { background-color: #1a3a52; }
         input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 18px; width: 18px; border-radius: 50%; background: white; cursor: pointer; margin-top: -6px; border: 2px solid #ccc; box-shadow: 0 1px 3px rgba(0,0,0,0.3); transition: all 0.2s; }
-        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.1); box-shadow: 0 2px 5px rgba(0,0,0,0.4); }
-        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; cursor: pointer; border-radius: 3px; }
-
-        /* Threshold Color coding */
-        #greenThreshA::-webkit-slider-runnable-track { background: linear-gradient(to right, #057a05, #aaa); }
-        #ripeThreshB::-webkit-slider-runnable-track { background: linear-gradient(to right, #aaa, #f5d742); }
-        #veryRipeThreshA::-webkit-slider-runnable-track { background: linear-gradient(to right, #aaa, #964B00); }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #e67e22; cursor: pointer; margin-top: -7px; border: 2px solid white; shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; background: #cbd5e1; border-radius: 3px; }
+        canvas { background: #fff; border: 1px solid #ddd; border-radius: 8px; }
     </style>
 </head>
 <body>
 
 <div class="slide-container">
-    <div class="h-20 bg-academic-blue flex items-center px-8 justify-between text-white border-b-4 border-yellow-400">
+    <div class="h-20 bg-ncut-blue flex items-center px-8 justify-between text-white border-b-4 border-yellow-500">
         <div>
-            <p class="text-blue-300 text-[10px] font-bold tracking-widest uppercase mb-1">NCUT CV Lab - Richard Szeliski 2nd Ed.</p>
-            <h2 class="text-2xl font-bold"><i class="fas fa-carrot text-academic-orange mr-2"></i>Banana Ripeness Classifier (Perceptually Uniform)</h2>
+            <p class="text-blue-300 text-[10px] font-bold uppercase tracking-widest">NCUT Intelligent Automation - CV Lab</p>
+            <h2 class="text-xl font-bold">CIE Lab Banana Classifier</h2>
         </div>
-        <div class="text-right hidden md:block opacity-70 text-xs">
+        <div class="text-right hidden md:block text-xs opacity-60">
             <p>National Chin-Yi University of Technology</p>
-            <p>Dept. of Intelligent Automation Engineering</p>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 p-6">
-        
-        <div class="space-y-6">
-            <div class="bg-gray-900 rounded-xl overflow-hidden shadow-md relative" style="height: 280px;">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
+        <div class="space-y-4">
+            <div class="relative bg-black rounded-lg overflow-hidden shadow-inner h-64">
                 <video id="video" autoplay playsinline class="w-full h-full object-cover"></video>
-                <div class="absolute inset-0 flex items-center justify-center">
-                    <div class="w-16 h-16 border-4 border-dashed border-yellow-400 opacity-50" title="Sampling Area"></div>
-                </div>
-                <div class="absolute bottom-2 left-2 bg-black bg-opacity-70 text-white text-[10px] px-2 py-1 rounded">
-                    Sampling Area: 20x20 pixels (Center)
+                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div class="w-12 h-12 border-2 border-dashed border-yellow-400 opacity-60"></div>
                 </div>
             </div>
             
-            <button id="startCamera" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg font-bold shadow-lg transition active:scale-95">
-                <i class="fas fa-camera mr-2"></i>Start Rear Camera
+            <button id="startCamera" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold shadow-md hover:bg-blue-700 active:scale-95 transition">
+                <i class="fas fa-camera mr-2"></i>Start Mobile Camera
             </button>
-            <canvas id="canvas" class="hidden"></canvas>
-            
-            <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 text-sm text-blue-900 shadow-inner">
-                <p class="font-bold mb-2"><i class="fas fa-info-circle mr-1"></i> Student Instructions:</p>
-                <ul class="list-decimal list-inside space-y-1 space-y-1 text-xs">
-                    <li>Activate the camera and point it at a banana.</li>
-                    <li>Observe the live Lab coordinates.</li>
-                    <li>Adjust the Threshold Sliders to align the visualization's colored zones with the ripe/unripe colors.</li>
-                    <li>Verify how changing the Gamma Slider affects Luminance Y vs. the Chromaticity red dot position.</li>
-                </ul>
+
+            <div class="bg-gray-800 text-white p-4 rounded-xl flex justify-between items-center shadow-lg">
+                <div class="text-center flex-1 border-r border-gray-700">
+                    <p class="text-[10px] text-gray-400 uppercase">Lightness L*</p>
+                    <p class="text-2xl font-mono" id="valL">0.0</p>
+                </div>
+                <div class="text-center flex-1 border-r border-gray-700">
+                    <p class="text-[10px] text-gray-400 uppercase">a* (Grn-Red)</p>
+                    <p class="text-2xl font-mono text-red-400" id="valA">0.0</p>
+                </div>
+                <div class="text-center flex-1">
+                    <p class="text-[10px] text-gray-400 uppercase">b* (Blu-Yel)</p>
+                    <p class="text-2xl font-mono text-yellow-400" id="valB">0.0</p>
+                </div>
             </div>
+
+            <div id="status" class="text-3xl font-black text-center py-4 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 uppercase">Waiting...</div>
         </div>
 
         <div class="space-y-6">
-            <div class="bg-gray-800 text-white p-6 rounded-xl shadow-lg">
-                <p class="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-1">Live Sampling (Region Mean)</p>
-                <div class="grid grid-cols-3 text-center mb-3">
-                    <div class="font-mono text-2xl" id="meanLY">0.0</div>
-                    <div class="font-mono text-2xl text-red-400" id="meanLA">0.0</div>
-                    <div class="font-mono text-2xl text-yellow-400" id="meanLB">0.0</div>
-                    <div class="text-gray-500 text-[10px]">Luminous Y</div>
-                    <div class="text-gray-500 text-[10px]">Opponent a*</div>
-                    <div class="text-gray-500 text-[10px]">Opponent b*</div>
-                </div>
-                <div id="resultText" class="text-4xl font-bold text-center bg-gray-700 p-4 rounded-lg shadow-inner">RIPENESS</div>
-            </div>
-            
-            <div class="bg-white p-4 rounded-lg border shadow-sm relative" style="height: 300px;">
-                <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2"><i class="fas fa-chart-line mr-1"></i> Lab Chromaticity Visualization (a* vs b*)</h3>
+            <div class="relative h-64">
+                <p class="text-xs font-bold text-gray-500 mb-2 uppercase tracking-tighter">Color Visualization (a* vs b*)</p>
                 <canvas id="labGraph" class="w-full h-full"></canvas>
             </div>
-        </div>
 
-        <div class="bg-gray-50 p-6 rounded-xl border space-y-8 shadow-sm">
-            
-            <section>
-                <h3 class="text-lg font-bold text-gray-700 mb-5"><i class="fas fa-sliders-h mr-2"></i>Threshold Sliders (Color Segmentation)</h3>
-                <div class="space-y-5 bg-white p-4 rounded-lg shadow-sm border">
-                    <div>
-                        <div class="flex justify-between items-baseline mb-1">
-                            <label class="block text-xs font-bold text-green-700 uppercase">Green Threshold (a*)</label>
-                            <span class="font-mono text-green-700" id="greenThreshA_Val">-10</span>
-                        </div>
-                        <input id="greenThreshA" max="-2" min="-30" step="1" type="range" value="-10"/>
+            <div class="bg-gray-50 p-5 rounded-xl border space-y-4">
+                <h3 class="text-sm font-bold text-gray-600 uppercase border-b pb-2">Adjustable Thresholds</h3>
+                
+                <div>
+                    <div class="flex justify-between text-[10px] font-bold">
+                        <label class="text-green-600 uppercase">Unripe Boundary (a*)</label>
+                        <span id="labelT1">-10</span>
                     </div>
-                    
-                    <div>
-                        <div class="flex justify-between items-baseline mb-1">
-                            <label class="block text-xs font-bold text-yellow-700 uppercase">Yellow Threshold (b*)</label>
-                            <span class="font-mono text-yellow-700" id="ripeThreshB_Val">35</span>
-                        </div>
-                        <input id="ripeThreshB" max="80" min="10" step="1" type="range" value="35"/>
-                    </div>
-                    
-                    <div>
-                        <div class="flex justify-between items-baseline mb-1">
-                            <label class="block text-xs font-bold text-red-900 uppercase">Brown Threshold (a*)</label>
-                            <span class="font-mono text-red-900" id="veryRipeThreshA_Val">10</span>
-                        </div>
-                        <input id="veryRipeThreshA" max="30" min="2" step="1" type="range" value="10"/>
-                    </div>
+                    <input id="thresh1" max="-2" min="-30" type="range" value="-10" class="mt-1">
                 </div>
-                <p class="text-[10px] text-gray-500 mt-2 italic">※ These sliders define the colored decision zones on the graph.</p>
-            </section>
-            
-            <section class="border-t pt-6">
-                <h3 class="text-lg font-bold text-gray-700 mb-5"><i class="fas fa-sliders-h mr-2"></i>Advanced: Gamma Coding</h3>
-                <div class="flex items-center gap-4 bg-white p-4 rounded-lg shadow-sm border">
-                    <span class="text-4xl font-bold text-academic-orange font-mono" id="gammaValDisplay">2.2</span>
-                    <div class="flex-1">
-                        <label class="block text-xs font-bold text-gray-500 uppercase">Gamma (γ)</label>
-                        <input id="gammaSlider" max="3.0" min="0.5" step="0.1" type="range" value="2.2" class="mb-1"/>
-                        <p class="text-[10px] text-gray-400 italic">Used during linear to non-linear mapping (Section 2.3.2)</p>
+
+                <div>
+                    <div class="flex justify-between text-[10px] font-bold">
+                        <label class="text-yellow-600 uppercase">Ripe Boundary (b*)</label>
+                        <span id="labelT2">35</span>
                     </div>
+                    <input id="thresh2" max="80" min="10" type="range" value="35" class="mt-1">
                 </div>
-            </section>
+
+                <div>
+                    <div class="flex justify-between text-[10px] font-bold">
+                        <label class="text-red-800 uppercase">Very Ripe Boundary (a*)</label>
+                        <span id="labelT3">10</span>
+                    </div>
+                    <input id="thresh3" max="30" min="2" type="range" value="10" class="mt-1">
+                </div>
+
+                <div class="pt-2 border-t mt-2">
+                    <div class="flex justify-between text-[10px] font-bold text-gray-400">
+                        <label class="uppercase tracking-widest italic">Gamma (γ) Impact</label>
+                        <span id="labelGamma">2.2</span>
+                    </div>
+                    <input id="gammaSlider" max="3.0" min="0.5" step="0.1" type="range" value="2.2" class="mt-1 opacity-50">
+                </div>
+            </div>
         </div>
-    </div>
-    
-    <div class="bg-gray-100 p-4 text-center text-gray-500 text-[10px] border-t">
-        Richard Szeliski, Computer Vision: Algorithms and Applications, 2nd Edition. | Page 97 | National Chin-Yi University of Technology
     </div>
 </div>
 
 <script>
-    // --- State Variables ---
-    let currentLab = { L: 0, a: 0, b: 0 };
-    let precomputedGraphBg = null; // Store background drawing for optimization
-    const SAMPLING_SIZE = 20; // 20x20 area mean
-
-    // CIE XYZ reference white point (D65)
-    const refX=0.95047, refY=1.000, refZ=1.08883;
-
-    // --- UI Elements ---
-    const greenSlider = document.getElementById('greenThreshA');
-    const ripeSlider = document.getElementById('ripeThreshB');
-    const brownSlider = document.getElementById('veryRipeThreshA');
-    const gammaSlider = document.getElementById('gammaSlider');
-    const graphCanvas = document.getElementById('labGraph');
-    const graphCtx = graphCanvas.getContext('2d');
-    const resultText = document.getElementById('resultText');
-
-    // Display values update
-    greenSlider.oninput = (e) => { document.getElementById('greenThreshA_Val').innerText = e.target.value; precomputeGraphBg = null; classify(currentLab); };
-    ripeSlider.oninput = (e) => { document.getElementById('ripeThreshB_Val').innerText = e.target.value; precomputeGraphBg = null; classify(currentLab); };
-    brownSlider.oninput = (e) => { document.getElementById('veryRipeThreshA_Val').innerText = e.target.value; precomputeGraphBg = null; classify(currentLab); };
-    gammaSlider.oninput = (e) => { document.getElementById('gammaValDisplay').innerText = parseFloat(e.target.value).toFixed(1); };
-
-    // --- Core Algorithms ---
-    
-    // sRGB to CIE Lab Conversion (Perceptually Uniform Space)
-    function rgbToXyz(r, g, b) {
-        // Reverse Gamma (Linearize sRGB)
-        const linearize = (c) => {
-            c /= 255;
-            return (c > 0.04045) ? Math.pow((c + 0.055) / 1.055, 2.4) : c / 12.92;
-        }
-        let rL = linearize(r), gL = linearize(g), bL = linearize(b);
-        const X = rL * 0.4124 + gL * 0.3576 + bL * 0.1805;
-        const Y = rL * 0.2126 + gL * 0.7152 + bL * 0.0722; // design as Luminance
-        const Z = rL * 0.0193 + gL * 0.1192 + bL * 0.9505;
-        return {X, Y, Z};
-    }
-
-    function xyzToLab({X, Y, Z}) {
-        let xN=X/refX, yN=Y/refY, zN=Z/refZ;
-        const f = (t) => (t > 0.008856) ? Math.cbrt(t) : 7.787*t + 16/116;
-        let fx=f(xN), fy=f(yN), fz=f(zN);
-        return { L: 116*fy-16, a: 500*(fx-fy), b: 200*(fy-fz) };
-    }
-
-    // --- Classification Logic based on user sliders ---
-    function classify({a, b}) {
-        const greenT = parseInt(greenSlider.value);
-        const ripeT = parseInt(ripeSlider.value);
-        const brownT = parseInt(brownSlider.value);
-
-        if (a < greenT) {
-            resultText.innerText = "UNRIPE (Green)";
-            resultText.style.color = "#00FF00"; // Neon Green
-        } else if (b > ripeT) {
-            resultText.innerText = "RIPE (Yellow)";
-            resultText.style.color = "#FFFF00"; // Pure Yellow
-        } else if (a > brownT) {
-            resultText.innerText = "VERY RIPE (Brown)";
-            resultText.style.color = "#964B00"; // Brown
-        } else {
-            resultText.innerText = "NEUTRAL (Unknown)";
-            resultText.style.color = "white";
-        }
-    }
-
-    // --- Lab Graph Visualization (a* vs b*) ---
-    // Optimization: Draw colored background zones only when sliders change
-    function drawGraphBackground() {
-        if(precomputedGraphBg) return precomputedGraphBg; // use cached
-        
-        const w = graphCanvas.width = graphCanvas.offsetWidth;
-        const h = graphCanvas.height = graphCanvas.offsetHeight;
-        const bgCanvas = document.createElement('canvas');
-        bgCanvas.width = w; bgCanvas.height = h;
-        const bgCtx = bgCanvas.getContext('2d');
-
-        const greenT = parseInt(greenSlider.value);
-        const ripeT = parseInt(ripeSlider.value);
-        const brownT = parseInt(brownSlider.value);
-
-        // Utility to map Lab coordinates (-128 to 127) to pixel coordinates
-        const map = (val) => (val + 128) * (w / 256);
-
-        // Draw decision zones (Perceptually Uniform Segmentation Practice)
-        
-        // 1. Unripe (Green zone on the left: negative a*)
-        bgCtx.fillStyle = "rgba(0, 150, 0, 0.1)"; // Very faint green
-        bgCtx.fillRect(0, 0, map(greenT), h);
-        
-        // 2. Ripe (Yellow zone on top-right: positive b*)
-        bgCtx.fillStyle = "rgba(255, 255, 0, 0.1)"; // Very faint yellow
-        bgCtx.fillRect(map(greenT), 0, w - map(greenT), map(127 - ripeT)); // Top part
-
-        // 3. Very Ripe (Brown zone on far-right: strongly positive a*)
-        bgCtx.fillStyle = "rgba(150, 75, 0, 0.1)"; // Very faint brown
-        bgCtx.fillRect(map(brownT), map(127 - ripeT), w - map(brownT), h - map(127 - ripeT)); // Bottom right part
-
-        // 4. Draw Axis lines
-        bgCtx.strokeStyle = "#ccc"; bgCtx.lineWidth = 1;
-        bgCtx.beginPath();
-        // A-axis (horizontal, opponent green-red)
-        bgCtx.moveTo(0, h/2); bgCtx.lineTo(w, h/2);
-        // B-axis (vertical, opponent blue-yellow)
-        bgCtx.moveTo(w/2, 0); bgCtx.lineTo(w/2, h);
-        bgCtx.stroke();
-        
-        // Axis Labels
-        bgCtx.fillStyle = "#aaa"; bgCtx.font = "10px sans-serif";
-        bgCtx.fillText("+b (Yellow)", w/2 + 5, 12);
-        bgCtx.fillText("-b (Blue)", w/2 + 5, h - 5);
-        bgCtx.fillText("-a (Green)", 5, h/2 - 5);
-        bgCtx.fillText("+a (Red/Brown)", w - 60, h/2 - 5);
-
-        precomputedGraphBg = bgCanvas;
-        return bgCanvas;
-    }
-
-    function drawGraphDot({a, b}) {
-        const w = graphCanvas.width; const h = graphCanvas.height;
-        graphCtx.clearRect(0,0,w,h); // clear previous frame
-        graphCtx.drawImage(drawGraphBackground(), 0, 0); // draw precomputed bg
-
-        const map = (val) => (val + 128) * (w / 256);
-        
-        // Draw the live Lab coordinate of the banana
-        graphCtx.fillStyle = "red";
-        graphCtx.beginPath();
-        graphCtx.arc(map(a), map(127 - b), 6, 0, Math.PI * 2); // note Y flip for b*
-        graphCtx.fill();
-        graphCtx.strokeStyle = "white"; graphCtx.lineWidth = 2; graphCtx.stroke();
-    }
-
-    // --- Camera Handling ---
+    // --- Core Processing ---
     const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
+    const graph = document.getElementById('labGraph');
+    const ctx = graph.getContext('2d');
+    const statusDiv = document.getElementById('status');
     const startBtn = document.getElementById('startCamera');
+    
+    // UI Elements
+    const t1 = document.getElementById('thresh1');
+    const t2 = document.getElementById('thresh2');
+    const t3 = document.getElementById('thresh3');
+    const gammaS = document.getElementById('gammaSlider');
 
-    startBtn.addEventListener('click', () => {
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-        .then(stream => {
-            video.srcObject = stream;
-            startBtn.style.display = 'none';
-        })
-        .catch(err => alert('Rear Camera Error (or not supported): ' + err));
-    });
+    let currentLab = {L:0, a:0, b:0};
 
-    // --- Main Processing Loop ---
-    // Optimization: sampling central area mean for stability
-    setInterval(()=>{
-        if(video.videoWidth === 0 || video.style.display === 'none') return;
-        
-        canvas.width = SAMPLING_SIZE;
-        canvas.height = SAMPLING_SIZE;
-        
-        // Sample center from video stream
-        const sourceX = (video.videoWidth - SAMPLING_SIZE) / 2;
-        const sourceY = (video.videoHeight - SAMPLING_SIZE) / 2;
-        ctx.drawImage(video, sourceX, sourceY, SAMPLING_SIZE, SAMPLING_SIZE, 0, 0, SAMPLING_SIZE, SAMPLING_SIZE);
-        
-        const imageData = ctx.getImageData(0, 0, SAMPLING_SIZE, SAMPLING_SIZE);
-        const pixels = imageData.data;
-        
-        let sumR = 0, sumG = 0, sumB = 0;
-        let count = 0;
-        
-        for (let i = 0; i < pixels.length; i += 4) {
-            sumR += pixels[i]; sumG += pixels[i+1]; sumB += pixels[i+2];
-            count++;
-        }
-        
-        // Region Mean RGB
-        const meanR = sumR / count; const meanG = sumG / count; const meanB = sumB / count;
-        
-        // Conversion pipeline to Lab (Perceptually Uniform Space)
-        currentLab = xyzToLab(rgbToXyz(meanR, meanG, meanB));
-        
-        // Update Live Displays
-        document.getElementById('meanLY').innerText = currentLab.L.toFixed(1);
-        document.getElementById('meanLA').innerText = currentLab.a.toFixed(1);
-        document.getElementById('meanLB').innerText = currentLab.b.toFixed(1);
+    t1.oninput = () => document.getElementById('labelT1').innerText = t1.value;
+    t2.oninput = () => document.getElementById('labelT2').innerText = t2.value;
+    t3.oninput = () => document.getElementById('labelT3').innerText = t3.value;
+    gammaS.oninput = () => document.getElementById('labelGamma').innerText = parseFloat(gammaS.value).toFixed(1);
 
-        // Classification & Visualization
-        classify(currentLab);
-        drawGraphDot(currentLab);
-    }, 250); // sampling frequency
+    function rgbToLab(r, g, b) {
+        // Linearize based on Gamma
+        const gVal = parseFloat(gammaS.value);
+        let lin = (c) => Math.pow(c/255, gVal); // Simple Gamma impact simulation
+        let rL = lin(r), gL = lin(g), bL = lin(b);
+        
+        let X = rL * 0.4124 + gL * 0.3576 + bL * 0.1805;
+        let Y = rL * 0.2126 + gL * 0.7152 + bL * 0.0722;
+        let Z = rL * 0.0193 + gL * 0.1192 + bL * 0.9505;
+        
+        let f = (t) => (t > 0.008856) ? Math.cbrt(t) : 7.787*t + 16/116;
+        let xN = X/0.95047, yN = Y/1.0, zN = Z/1.08883;
+        return { L: 116*f(yN)-16, a: 500*(f(xN)-f(yN)), b: 200*(f(yN)-f(zN)) };
+    }
 
-    // Force graph resize on window resize
-    window.onresize = () => { precomputeGraphBg = null; drawGraphDot(currentLab); };
+    function drawGraph() {
+        const w = graph.width = graph.offsetWidth;
+        const h = graph.height = graph.offsetHeight;
+        ctx.clearRect(0, 0, w, h);
+        
+        // Grid Axis
+        ctx.strokeStyle = "#f0f0f0"; ctx.beginPath();
+        ctx.moveTo(w/2, 0); ctx.lineTo(w/2, h); ctx.moveTo(0, h/2); ctx.lineTo(w, h/2); ctx.stroke();
+        
+        const m = (val) => (val + 100) * (w/200); // Map -100 to 100
+        
+        // Decision Background Zones
+        ctx.globalAlpha = 0.1;
+        ctx.fillStyle = "green"; ctx.fillRect(0, 0, m(parseInt(t1.value)), h);
+        ctx.fillStyle = "yellow"; ctx.fillRect(m(parseInt(t1.value)), 0, w - m(parseInt(t1.value)), m(-parseInt(t2.value) + 50)); 
+        ctx.fillStyle = "brown"; ctx.fillRect(m(parseInt(t3.value)), m(50), w - m(parseInt(t3.value)), h/2);
+        ctx.globalAlpha = 1.0;
+
+        // banana Dot
+        ctx.fillStyle = "red"; ctx.beginPath();
+        ctx.arc(m(currentLab.a), h - m(currentLab.b), 8, 0, 7);
+        ctx.fill(); ctx.strokeStyle = "white"; ctx.lineWidth = 2; ctx.stroke();
+        
+        // Labels
+        ctx.fillStyle = "#999"; ctx.font = "8px Arial";
+        ctx.fillText("+b (Yellow)", w/2 + 5, 15);
+        ctx.fillText("-a (Green)", 5, h/2 - 5);
+    }
+
+    startBtn.onclick = () => {
+        navigator.mediaDevices.getUserMedia({video: {facingMode:'environment'}}).then(s => {
+            video.srcObject = s; startBtn.style.display = 'none';
+        });
+    }
+
+    setInterval(() => {
+        if (!video.videoWidth) return;
+        const tempCanvas = document.createElement('canvas');
+        const tCtx = tempCanvas.getContext('2d');
+        tempCanvas.width = 10; tempCanvas.height = 10;
+        tCtx.drawImage(video, video.videoWidth/2-5, video.videoHeight/2-5, 10, 10, 0, 0, 10, 10);
+        const p = tCtx.getImageData(5, 5, 1, 1).data;
+        currentLab = rgbToLab(p[0], p[1], p[2]);
+        
+        document.getElementById('valL').innerText = currentLab.L.toFixed(1);
+        document.getElementById('valA').innerText = currentLab.a.toFixed(1);
+        document.getElementById('valB').innerText = currentLab.b.toFixed(1);
+
+        if (currentLab.a < t1.value) { statusDiv.innerText = "Unripe"; statusDiv.style.color = "green"; }
+        else if (currentLab.b > t2.value) { statusDiv.innerText = "Ripe"; statusDiv.style.color = "#d4af37"; }
+        else if (currentLab.a > t3.value) { statusDiv.innerText = "Very Ripe"; statusDiv.style.color = "brown"; }
+        else { statusDiv.innerText = "Unknown"; statusDiv.style.color = "#999"; }
+        
+        drawGraph();
+    }, 200);
 </script>
 </body>
 </html>
